@@ -1,0 +1,18 @@
+--- 
+description: " A simple template to build a persisten storage device"
+heat_template_version: 2014-10-16
+parameters: 
+  availability_z: 
+    default: monash-01
+    description: "Availability Zone to be used for launching compute instance"
+    label: "Availability Zone"
+    type: string
+resources:
+  headVolume: 
+    properties: 
+      availability_zone: 
+        get_param: availability_z
+      description: "Volume that will attach the headNode"
+      name: headNodeVolume
+      size: 50
+    type: "OS::Cinder::Volume"

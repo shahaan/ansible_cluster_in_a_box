@@ -1,0 +1,77 @@
+--- 
+description: " A simple template to boot a dynamic cluster"
+heat_template_version: 2014-10-16
+parameters: 
+  availability_z: 
+    default: monash-02
+    description: "Availability Zone to be used for launching compute instance"
+    label: "Availability Zone"
+    type: string
+    constraints:
+      -
+       allowed_values:
+         - monash-01
+         - monash-02
+  flavor_name: 
+    constraints: 
+      - 
+        allowed_values: 
+          - m1.small
+          - m1.medium
+          - m1.large
+    description: "Flavor to be useed to create this server"
+    label: "Flavor ID"
+    type: string
+  image_id: 
+    default: "NeCTAR CentOS 7 x86_64"
+    description: "Image to be used for compute instance"
+    label: "Image ID"
+    type: string
+  key_name: 
+    constraints: 
+      - 
+        custom_constraint: nova.keypair
+    default: shahaan
+    description: "Name of key-pair to be used for compute instance"
+    label: "Key Name"
+    type: string
+  resource_count: 
+    default: 1
+    description: "Number of resources to be spawned"
+    label: "Resource Count"
+    type: number
+resources:
+  headNode: 
+    properties: 
+      availability_zone: 
+        get_param: availability_z
+      block_device_mapping: 
+        - 
+          delete_on_termination: true
+          device_name: /dev/vdc
+          volume_id: 
+            get_resource: headVolume
+          volume_size: 50
+      flavor: 
+        get_param: flavor_name
+      image: 
+        get_param: image_id
+      key_name: 
+        get_param: key_name
+      metadata: 
+        ansible_host_group: headNode
+        ansible_ssh_private_key_file: /home/sgeadmin/.ssh/shahaan.pem
+        ansible_ssh_user: ec2-user
+      security_groups: 
+        - OpenVPN
+        - NSF
+        - default
+    type: "OS::Nova::Server"
+  headVolume: 
+    properties: 
+      availability_zone: 
+        get_param: availability_z
+      description: "Volume that will attach the headNode"
+      name: headNodeVolume
+      size: 50
+    type: "OS::Cinder::Volume"

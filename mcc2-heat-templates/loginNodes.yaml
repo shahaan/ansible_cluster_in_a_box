@@ -1,0 +1,64 @@
+--- 
+description: " A simple template to boot a dynamic cluster"
+heat_template_version: 2014-10-16
+parameters: 
+  availability_z: 
+    default: monash-02
+    description: "Availability Zone to be used for launching compute instance"
+    label: "Availability Zone"
+    type: string
+  flavor_name:
+    default: m1.medium 
+    constraints: 
+      - 
+        allowed_values: 
+          - m1.small
+          - m1.medium
+    description: "Flavor to be used to create this server"
+    label: "Flavor ID"
+    type: string
+  image_id:
+    default: NeCTAR CentOS 7 x86_64 
+    description: "Image to be used for compute instance"
+    label: "Image ID"
+    type: string
+  key_name: 
+    constraints: 
+      - 
+        custom_constraint: nova.keypair
+    default: shahaan
+    description: "Name of key-pair to be used for compute instance"
+    label: "Key Name"
+    type: string
+  resource_count: 
+    constraints: 
+      - 
+        range: 
+          max: 10
+          min: 1
+    default: 1
+    description: "Number of resources to be spawned"
+    label: "Resource Count"
+    type: number
+resources:
+  loginNodes: 
+    depends_on: headNode
+    properties: 
+      count: 
+        get_param: resource_count
+      resource_def: 
+        properties: 
+          availability_zone: 
+            get_param: availability_z
+          flavor: 
+            get_param: flavor_name
+          image: 
+            get_param: image_id
+          key_name: 
+            get_param: key_name
+          metadata: 
+            ansible_host_group: loginNodes
+            ansible_ssh_private_key_file: /home/sgeadmin/.ssh/shahaan.pem
+            ansible_ssh_user: ec2-user
+          name: ln-%index%
+        type: "OS::Nova::Server"

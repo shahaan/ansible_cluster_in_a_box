@@ -1,0 +1,86 @@
+--- 
+description: " A simple template to boot a dynamic cluster"
+heat_template_version: 2014-10-16
+parameters: 
+  availability_z: 
+    default: monash-01
+    description: "Availability Zone to be used for launching compute instance"
+    label: "Availability Zone"
+    type: string
+  flavor_name: 
+    constraints: 
+      - 
+        allowed_values: 
+          - m1.small
+          - m1.medium
+          - m1.large
+    description: "Flavor to be useed to create this server"
+    label: "Flavor ID"
+    type: string
+  image_id: 
+    constraints: 
+      - 
+        allowed_values: 
+          - "NeCTAR CentOS 7 x86_64"
+          - "NeCTAR Debian 8 (Jessie) amd64"
+          - "NeCTAR Ubuntu 14.04 (Trusty) amd64"
+    default: "NeCTAR CentOS 7 x86_64"
+    description: "Image to be used for compute instance"
+    label: "Image ID"
+    type: string
+  key_name: 
+    constraints: 
+      - 
+        custom_constraint: nova.keypair
+    default: shahaan
+    description: "Name of key-pair to be used for compute instance"
+    label: "Key Name"
+    type: string
+  resource_count: 
+    constraints: 
+      - 
+        range: 
+          max: 100
+          min: 1
+    default: 1
+    description: "Number of resources to be spawned"
+    label: "Resource Count"
+    type: number
+resources: 
+  computeNodes: 
+    depends_on: 
+      - headNode
+      - loginNodes
+    properties: 
+      resource_def: 
+        type: computeNode.yaml
+    type: "OS::Heat::ResourceGroup"
+  headNode: 
+    properties: 
+      availability_zone: 
+        get_param: availability_z
+      block_device_mapping: 
+        - 
+          delete_on_termination: true
+          device_name: /dev/vdc
+          volume_id: 
+            get_resource: headVolume
+          volume_size: 50
+    type: headNode.yaml
+  headVolume: 
+    properties: 
+      availability_zone: 
+        get_param: availability_z
+      description: "Volume that will attach to the headNode"
+      name: headNodeVolume
+      size: 50
+    type: persistentStorage.yaml
+  loginNodes: 
+    depends_on: headNode
+    properties: 
+      count: 
+        get_param: resource_count
+      resource_def: 
+        type: loginNode.yaml
+    type: "OS::Heat::ResourceGroup"
+
